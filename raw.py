@@ -3,13 +3,12 @@ import logging
 from decimal import Decimal
 from binascii import hexlify, unhexlify
 
+logging.basicConfig()
+logging.getLogger("BitcoinRPC").setLevel(logging.DEBUG)
 
 # Login information for my node
 rpc_user = "bitcoinrpc"
 rpc_password = "87Y9A2gs25E9HDPGc9axqSqzxMR2MyTtrMkYc5KiZk2Z"
-
-logging.basicConfig()
-logging.getLogger("BitcoinRPC").setLevel(logging.DEBUG)
 
 rpc = AuthServiceProxy("http://%s:%s@127.0.0.1:18332/" % (rpc_user, rpc_password))
 
@@ -37,7 +36,7 @@ tx = rpc.createrawtransaction([{"txid": txid, "vout": vout}], \
 
 # Pattern to replace
 # Represents length of script, then OP_DUP OP_HASH160,
-# then length of hash, then hash, OP_EQUALVERIFY OP_CHECKSIG
+# then length of hash, then 20 bytes of zeros, OP_EQUALVERIFY OP_CHECKSIG
 oldScriptPubKey = "1976a914000000000000000000000000000000000000000088ac"
 
 # Data to insert
@@ -55,6 +54,7 @@ if oldScriptPubKey not in tx:
     raise Exception("Something broke!")
 
 tx = tx.replace(oldScriptPubKey, newScriptPubKey)
+
 rpc.decoderawtransaction(tx)
 tx = rpc.signrawtransaction(tx)['hex']
 rpc.sendrawtransaction(tx)
